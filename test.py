@@ -1,6 +1,6 @@
 import app
 
-template = [
+solution = [
     [1, 2, 3, 4, 5, 6, 7, 8, 9],
     [7, 5, 4, 8, 3, 9, 6, 2, 1],
     [8, 6, 9, 1, 2, 7, 4, 3, 5],
@@ -26,4 +26,10 @@ test = [
 
 # print(test)
 
-app.sudoku_solve(test)
+result = app.sudoku_solve(test)
+
+# TODO: Check to see if the correct solution is still possible given the output
+def test_check(test, solution) :
+    pass
+
+test_check(test, solution)
