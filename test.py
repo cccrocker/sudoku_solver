@@ -28,8 +28,21 @@ test = [
 
 result = app.sudoku_solve(test)
 
-# TODO: Check to see if the correct solution is still possible given the output
 def test_check(test, solution) :
-    pass
+    for row in range(len(test)):
+        for col in range(len(test[row])):
+            # print("Row is " + str(row))
+            # print("Col is " + str(col))
+            # print("Solution value is " + str(solution[row][col]))
+            # print("Test value is " + str(test[row][col]))
+            if type(test[row][col]) == int:
+                test[row][col] = [test[row][col]]
+            if not (solution[row][col] in test[row][col]):
+                msg = "Failed solution test"
+                print(msg)
+                return msg
+    msg = "Passed solution test"
+    print(msg)
+    return msg
 
 test_check(test, solution)

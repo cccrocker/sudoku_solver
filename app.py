@@ -109,16 +109,37 @@ def simplify(sudoku, missing_rows, missing_cols, changes) :
 
 # TODO: Check each row, col, and block for a value option that only shows up once
 def single_occurrence(sudoku, missing_rows, missing_cols, changes) :
-    # single occurrence in row
-    row_occurrences = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
-    col_occurrences = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
-    block_occurrences = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
+    # start a count of occurrences, create list with indexes 0-9, and ignore the 0
+    row_occurrences = [0 for _ in range(10)]
+    col_occurrences = [0 for _ in range(10)]
+    block_occurrences = [0 for _ in range(10)]
+    # iterate thru all 9 rows, cols, and blocks once
     for row in range(9) :
-        for col in range(9) :
-            if type(sudoku[row][col]) == list :
-                pass
-    # single occurrence in col
-    # single occurrence in block
+        col = row // 3 + 3 * (row % 3) # row_col = 0_0, 1_3, 2_6, 3_1, 4_4, 5_7, 6_2, 7_5, 8_8
+        # Get first row and col for the block
+        block_row = 3 * (row // 3)
+        block_col = 3 * (col // 3)
+        # iterate thru cells in the row, col, and block
+        for cell in range(9) :
+            # Get the list of possible values in the cell
+            vals = sudoku[row][col]
+            # Figure out how the block will get iterated thru
+            block_cell_row = block_row + (cell // 3)
+            block_cell_col = block_col + (cell % 3)
+            # Check other cells in the same row, col, and block
+            row_opt = sudoku[cell][col] if type(sudoku[cell][col]) == list else []
+            col_opt = sudoku[row][cell] if type(sudoku[row][cell]) == list else []
+            block_opt = sudoku[block_cell_row][block_cell_col] if type(sudoku[block_cell_row][block_cell_col]) == list else []
+
+            # TODO: Iterate thru the row/col/block_opt and increment the row/col/block_occurrences lists accordingly
+            for val in row_opt:
+                row_occurrences[val] += 1
+            for val in col_opt:
+                col_occurrences[val] += 1
+            for val in block_opt:
+                block_occurrences[val] += 1
+
+
     return sudoku, missing_rows, missing_cols, changes
 
 def find_block(row, col) :
