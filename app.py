@@ -7,16 +7,23 @@ def sudoku_solve(sudoku) :
     while not solved :
         # Notify user of iteration
         print("Iterating...")
-
-        # Each step starts counting how many changes it's made
-        changes = 0
-        # Remove possible values based on filled values in the same row, column, and block
-        sudoku, missing_rows, missing_cols, changes = simplify(sudoku, missing_rows, missing_cols, changes)
+        
+        # Simulate do...while loop
+        changes = 1
+        while changes :
+            # Each step starts counting how many changes it's made
+            changes = 0
+            # Remove possible values based on filled values in the same row, column, and block
+            sudoku, missing_rows, missing_cols, changes = reduction(sudoku, missing_rows, missing_cols, changes)
+            # Re-check for cells without a value
+            sudoku, solved, missing_rows, missing_cols = find_missing(sudoku)
+        
         # Fill cell if a number could only exist in that cell in its row, column, or block
+        print_sudoku(sudoku)
         sudoku, missing_rows, missing_cols, changes = single_occurrence(sudoku, missing_rows, missing_cols, changes)
-
+        
         # If no changes have been recorded, then the program has failed
-        if changes == 0:
+        if changes == 0 and not filled(sudoku):
             # Assign failed message
             message = "Failed with " + str(len(missing_rows) + 1) + " cells left"
             break
@@ -26,10 +33,21 @@ def sudoku_solve(sudoku) :
     
     # The program has finished, let the user know what was found
     print(message)
-    for val in sudoku :
-        print(val)
+    print_sudoku(sudoku)
 
     return sudoku
+
+def print_sudoku(sudoku):
+    for row in sudoku:
+        print(row)
+    return
+
+def filled(sudoku):
+    for row in range(9) :
+        for col in range(9) :
+            if type(sudoku[row][col]) == list :
+                return False
+    return True
 
 # Fill empty cells with a list of 1-9, and grab a list of cells that haven't been solved
 def find_missing(sudoku, init = 0) :
@@ -58,9 +76,9 @@ def find_missing(sudoku, init = 0) :
     return sudoku, solved, missing_rows, missing_cols
 
 # Remove possible solutions from a cell based on other values in its row, col, and block
-def simplify(sudoku, missing_rows, missing_cols, changes) :
+def reduction(sudoku, missing_rows, missing_cols, changes) :
     # Notify user what we're doing
-    print("Simplifying cell options...")
+    print("Reducing cell options...")
     # Check for weird errors
     if len(missing_rows) != len(missing_cols) :
         print("Error with length of missing cells")
@@ -109,20 +127,23 @@ def simplify(sudoku, missing_rows, missing_cols, changes) :
 
 # TODO: Check each row, col, and block for a value option that only shows up once
 def single_occurrence(sudoku, missing_rows, missing_cols, changes) :
-    # start a count of occurrences, create list with indexes 0-9, and ignore the 0
-    row_occurrences = [0 for _ in range(10)]
-    col_occurrences = [0 for _ in range(10)]
-    block_occurrences = [0 for _ in range(10)]
+    print("Checking for single occurrences...")
+    # Initialize list of changes to make to sudoku
+    replacements = []
     # iterate thru all 9 rows, cols, and blocks once
-    for row in range(9) :
-        col = row // 3 + 3 * (row % 3) # row_col = 0_0, 1_3, 2_6, 3_1, 4_4, 5_7, 6_2, 7_5, 8_8
+    for i in range(9) :
+        # start a count of occurrences, create list with indexes 0-9, and ignore the 0
+        row_occurrences = [{"count":0} for _ in range(10)]
+        col_occurrences = [{"count":0} for _ in range(10)]
+        block_occurrences = [{"count":0} for _ in range(10)]
+        # Get a unique col, based on the row
+        row = i
+        col = (i // 3) + (3 * (i % 3)) # row_col = 0_0, 1_3, 2_6, 3_1, 4_4, 5_7, 6_2, 7_5, 8_8
         # Get first row and col for the block
         block_row = 3 * (row // 3)
         block_col = 3 * (col // 3)
         # iterate thru cells in the row, col, and block
         for cell in range(9) :
-            # Get the list of possible values in the cell
-            vals = sudoku[row][col]
             # Figure out how the block will get iterated thru
             block_cell_row = block_row + (cell // 3)
             block_cell_col = block_col + (cell % 3)
@@ -131,16 +152,45 @@ def single_occurrence(sudoku, missing_rows, missing_cols, changes) :
             col_opt = sudoku[row][cell] if type(sudoku[row][cell]) == list else []
             block_opt = sudoku[block_cell_row][block_cell_col] if type(sudoku[block_cell_row][block_cell_col]) == list else []
 
-            # TODO: Iterate thru the row/col/block_opt and increment the row/col/block_occurrences lists accordingly
+            # Iterate thru the row/col/block_opt and increment the row/col/block_occurrences lists accordingly
             for val in row_opt:
-                row_occurrences[val] += 1
+                row_occurrences[val]["count"] += 1
+                row_occurrences[val]["last"] = [cell, col]
             for val in col_opt:
-                col_occurrences[val] += 1
+                col_occurrences[val]["count"] += 1
+                col_occurrences[val]["last"] = [row, cell]
             for val in block_opt:
-                block_occurrences[val] += 1
+                block_occurrences[val]["count"] += 1
+                block_occurrences[val]["last"] = [block_cell_row, block_cell_col]
+            
+        # Iterate thru the count of occurrences, and assign numbers if they only appeared once
+        for num in range(1, 10):
+            if row_occurrences[num]["count"] == 1:
+                replace_row, replace_col = row_occurrences[num]["last"]
+                replacements.append([replace_row, replace_col, num])
+                # sudoku[replace_row][replace_col] = num
+                changes = 1
+                # print("Made a change at {} and {}".format(replace_row, replace_col))
+                # print_sudoku(sudoku)
+            if col_occurrences[num]["count"] == 1:
+                replace_row, replace_col = col_occurrences[num]["last"]
+                replacements.append([replace_row, replace_col, num])
+                # sudoku[replace_row][replace_col] = num
+                changes = 1
+                # print("Made a change at {} and {}".format(replace_row, replace_col))
+                # print_sudoku(sudoku)
+            if block_occurrences[num]["count"] == 1:
+                replace_row, replace_col = block_occurrences[num]["last"]
+                replacements.append([replace_row, replace_col, num])
+                # sudoku[replace_row][replace_col] = num
+                changes = 1
+                # print("Made a change at {} and {}".format(replace_row, replace_col))
+                # print_sudoku(sudoku)
+    
+    for row, col, num in replacements:
+        sudoku[row][col] = num
 
-
-    return sudoku, missing_rows, missing_cols, changes
+    return sudoku, [], [], changes
 
 def find_block(row, col) :
     block = 3 * (row // 3) + (col // 3)
